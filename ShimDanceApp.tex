@@ -433,7 +433,19 @@ We also wanted to replace external physical controllers with shimmer sensors to 
 %Methods
 \section{Methods}
 
-\subsection{Software \& Hardware}
+\subsection{Hardware \& Software}
+Two shimmer sensors are used as a motion capture devices. The second edition of the device is used with \emph{BTStream v1.0} firmware, as well as the calibration software provided by the vendor \cite{ShimmerCalibration}.
+Sensors are placed on the front of the feet with orientation shown on Fig.~\ref{fig:ShimmerPlacement}.
+Only accelerometer sensors are used with range set to $6\,G$ and with any of sampling rates: $102,4\,Hz, 128\,Hz, 170,7\,Hz, 204,8\,Hz, 256\,Hz$.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=5cm]{Images/Foot.jpg}
+    \caption{Placement of the Shimmer sensor on the left foot. Y axis is pointing down, Z axis is pointing forward (with respect to the person wearing the sensor) and the X axis is pointing to the right. The same sensor orientation should be used in the right foot.}
+    \label{fig:ShimmerPlacement}
+\end{figure}
+
+
 
 \subsection{Data acquisition}
 
@@ -468,6 +480,8 @@ In the future we can expect to see technology such as Project Soli which will al
 \bibitem{openiano1992foot}Openiano, R.M.: {Foot-actuated computer game controller serving as a joystick}. US Patent 5,139,261 (1992)
 
 \bibitem{Shimmer}Shimmer {http://www.shimmersensing.com/}. Last visited: 28.07.2015 (2015)
+
+\bibitem{ShimmerCalibration}Shimmer 9DOF Calibration v2.0\\{http://www.shimmersensing.com/images/uploads/docs/\\Shimmer\_9DoF\_Calibration\_v2.7.zip} Last visited: 28.07.2015 (2015)
 
 \bibitem{JustDanceNow}Google play, Just Dance Now\\{https://play.google.com/store/apps/details?id=com.ubisoft.dance.JustDance} 26.07.2015 (2015)
 
