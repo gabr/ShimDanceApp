@@ -341,6 +341,7 @@
 % to submit to, of course. )
 
 \usepackage[utf8]{inputenc}
+\usepackage{xfrac}
 
 
 % correct bad hyphenation here
@@ -399,7 +400,6 @@ Technische Fakultät}}
 
 
 \begin{abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sed tempor mauris. Fusce pellentesque libero at eleifend mollis. Nunc nibh felis, sodales et tellus eget, luctus sollicitudin diam. Proin libero lectus, tincidunt ac ornare vel, malesuada vitae mi. Aliquam nec lectus quis urna semper imperdiet ac sed neque. Proin pretium odio quis diam lacinia blandit. Morbi nec consectetur justo. Nulla turpis turpis, consectetur nec eros at, molestie bibendum metus. Curabitur egestas justo nulla, congue dignissim purus molestie eget. Vivamus auctor luctus nibh eu efficitur. 
 \end{abstract}
 
 
@@ -431,33 +431,126 @@ Outside of the mobile world there exist dance game controllers for feet~\cite{su
 Our goal was to create dance game application for Android where game controllers are player feet.
 We also wanted to replace external physical controllers with shimmer sensors to read player movements directly from they feet~\cite{Shimmer}.
 
+This task consist of three problems:
+\begin{itemize}
+    \item Detection of foot position (left, right, front, back)
+    \item Detection of foot stamps
+    \item Synchronizing detections with the game
+\end{itemize}
+
+
 %Methods
 \section{Methods}
 
 \subsection{Hardware \& Software}
-Two shimmer sensors are used as a motion capture devices. The second edition of the device is used with \emph{BTStream v1.0} firmware, as well as the calibration software provided by the vendor \cite{ShimmerCalibration}.
+Two shimmer sensors are used as a motion capture devices.
+They are second edition devices with \emph{BTStream v1.0} firmware. Also calibration software provided by the vendor was used \cite{ShimmerCalibration}.
 Sensors are placed on the front of the feet with orientation shown on Fig.~\ref{fig:ShimmerPlacement}.
-Only accelerometer sensors are used with range set to $6\,G$ and with any of sampling rates: $102,4\,Hz, 128\,Hz, 170,7\,Hz, 204,8\,Hz, 256\,Hz$.
 
 \begin{figure}[!h]
     \centering
     \includegraphics[width=5cm]{Images/Foot.jpg}
-    \caption{Placement of the Shimmer sensor on the left foot. Y axis is pointing down, Z axis is pointing forward (with respect to the person wearing the sensor) and the X axis is pointing to the right. The same sensor orientation should be used in the right foot.}
+    \caption{Placement of the Shimmer sensor on the left foot.
+    Y axis is pointing down, Z axis is pointing forward (with respect to the person wearing the sensor) and the X axis is pointing to the right. The same sensor orientation should be used in the right foot.}
     \label{fig:ShimmerPlacement}
 \end{figure}
 
 Following mobile devices were used:
-\begin{enumerate}
-    \item Samsung Galaxy s4 mini LTE with Android 4.4.2
-    \item Samsung Galaxy s5 with Android 5.0.0
-    \item Samsung Galaxy Tab 2 with Android ...
-\end{enumerate}
+\begin{itemize}
+    \item Samsung Galaxy s4 mini LTE with Android 4.4
+    \item Samsung Galaxy s5 with Android 5.0
+    \item Samsung Galaxy Tab 2 with Android 4.0
+\end{itemize}
 
-For development process Android Studio 1.0.2 was used with target SDK version 11. Application was created based on \emph{aasbase} project provided by Pattern Recognition Lab (CS~5), Digital Sports Group from Friedrich-Alexander Universität in Erlangen. It uses shimmerresearch package in 1.1.3 version.
+For development process Android Studio 1.0.2 was used with target SDK version 11 \cite{AndroidStudio}. 
+Application was created based on \emph{aasbase} project provided by Pattern Recognition Lab (CS~5), Digital Sports Group from Friedrich-Alexander Universität in Erlangen \cite{CS5}.
+It uses shimmerresearch package in 1.1.3 version.
+
 
 \subsection{Data acquisition}
+Connection with the sensors is done via bluetooth and requires pairing shimmers with device before using the application.
+Only accelerometer sensors are used with range set to $6\,G$ and with one of two sampling rates: $204,8\,Hz, 256\,Hz$.
+
+Whole communication is managed by provided shimmer drivers and \emph{SensorDeviceManager} class from \emph{aasbase} project. The exact description of communication process is explained in \emph{AAS\_Base\_Tutorial.pdf} also provided by Pattern Recognition Lab (CS~5), Digital Sports Group from Friedrich-Alexander Universität in Erlangen \cite{CS5}.
+
 
 \subsection{Preprocessing}
+Because moving person produces a lot of noise signal, moving average filter is used (Eq.~\ref{MovingAverage}) \cite{MovingAverage}.
+The $M$ denotes size of the filter and the result of $Fq/4$ is used as its value, where $Fq$ is selected sampling rate.
+
+\begin{equation}
+	SMA(n) = 1/M\qquad  n = 0, 1, ..., M - 1
+	\label{MovingAverage}
+\end{equation}
+
+To use filter with the signal the samples of data for each sensor axis are collected in queue with size  $2*M$ (Eq.~\ref{AxisData}).
+After reaching the $2*M$ number of data, the new one are appended at the end of the queue and the oldest one are removed, to keep size of $2*M$.
+Index $a$ is used to distinguish between axis.
+
+\begin{equation}
+    f_a(n) = a_n\qquad n = 0, 1, ..., (2*M) - 1,\quad a \in \{x, y, z\}
+    \label{AxisData}
+\end{equation}
+
+This process causes a delay because the number of $2*M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}). The $Fq$ is selected sampling rate.
+
+\begin{equation}
+    delay = \frac{1}{Fq} * 2*M\quad[s]
+    \label{Delay}
+\end{equation}
+
+Filtering is done by convolution of collected data with filter~(Eq.~\ref{Convolution}).
+
+\begin{equation}
+    f_a'(t) = (f_a \ast SMA)(t) \qquad a \in \{x, y, z\}
+    \label{Convolution}
+\end{equation}
+
+The algorithm for this process looks as follows:
+\begin{enumerate}
+    \item Create filter $SMA$ (Eq.~\ref{MovingAverage})
+    \item For each new sensor data:
+    \begin{enumerate}
+        \item Append new data to the corresponding $f_a$ (Eq.~\ref{AxisData})
+        \item If size of $f_a$ is greater then $M$ remove first element
+        \item Calculate $f_a'$ (Eq.~\ref{Convolution})
+    \end{enumerate}
+\end{enumerate}
+
+Example result of filtering can be seen on Fig.~\ref{fig:MovinAverageExample}.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=9.5cm]{Images/MovinAverageExample.png}
+    \caption{Result of moving average filter with filter size equal $Fq/4$ where $Fq$ is selected sampling rate}
+    \label{fig:MovinAverageExample}
+\end{figure}
+
+To provide easier feet stamp detection additional queue is created with the same size as data queue (Eq.~\ref{Stamp}).
+
+\begin{equation}
+    f_s(n) = \left(\sum\limits_{a} |f_a|\right)^3 \qquad a\in \{x, y, z\}
+    \label{Stamp}
+\end{equation}
+
+This result in one always positive signal (Fig.~\ref{fig:Stamp}) with exponentially increased peaks.
+On this signal the moving average filter is used as well (Fig.~\ref{fig:StampFiltered}).
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=9.5cm]{Images/Stamp.png}
+    \caption{Sum of absolute values of all signal data}
+    \label{fig:Stamp}
+\end{figure}
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=9.5cm]{Images/StampFiltered.png}
+    \caption{Signal for detecting feet stamps Eq.~\ref{Stamp} after filtering}
+    \label{fig:StampFiltered}
+\end{figure}
+
+\subsection{Motion recognition}
 
 \subsection{Game \& Graphic control}
 
@@ -489,17 +582,21 @@ In the future we can expect to see technology such as Project Soli which will al
 
 \bibitem{Shimmer}Shimmer {http://www.shimmersensing.com/}. Last visited: 28.07.2015 (2015)
 
-\bibitem{ShimmerCalibration}Shimmer 9DOF Calibration v2.0\\{http://www.shimmersensing.com/images/uploads/docs/\\Shimmer\_9DoF\_Calibration\_v2.7.zip} Last visited: 28.07.2015 (2015)
+\bibitem{ShimmerCalibration}Shimmer 9DOF Calibration v2.0\\{http://www.shimmersensing.com/images/uploads/docs/\\Shimmer\_9DoF\_Calibration\_v2.7.zip} last visited: 28.07.2015 (2015)
 
-\bibitem{JustDanceNow}Google play, Just Dance Now\\{https://play.google.com/store/apps/details?id=com.ubisoft.dance.JustDance} 26.07.2015 (2015)
+\bibitem{AndroidStudio}Android Studio {https://developer.android.com/sdk/index.html} last visited 28.07.2015 (2015)
 
-\bibitem{DanceGamesList}Google play, Dance games\\{https://play.google.com/store/search?q=dance\%20game\&c=apps}. last visited: 26.07.2015 (2015)
+\bibitem{CS5}Pattern Recognition Lab {http://www5.cs.fau.de/} last visited: 28.07.2015 (2015)
 
-\bibitem{ProjectSoli}Youtube, Welcome to Project Soli {https://youtu.be/0QNiZfSsPc0}. last visited: 28.07.2015 (2015)
+\bibitem{MovingAverage}Wikipedia, Moving average {https://en.wikipedia.org/wiki/Moving\_average} last visited: 29.07.2015 (2015)
+
+\bibitem{JustDanceNow}Google play, Just Dance Now\\{https://play.google.com/store/apps/details?id=com.ubisoft.dance.JustDance} last visited 26.07.2015 (2015)
+
+\bibitem{DanceGamesList}Google play, Dance games\\{https://play.google.com/store/search?q=dance\%20game\&c=apps} last visited: 26.07.2015 (2015)
+
+\bibitem{ProjectSoli}Youtube, Welcome to Project Soli {https://youtu.be/0QNiZfSsPc0} last visited: 28.07.2015 (2015)
 
 \end{thebibliography}
 
 % that's all folks
 \end{document}
-
-
