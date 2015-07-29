@@ -420,7 +420,7 @@ Technische Fakultät}}
 
 There exist various dance games for Android platform.
 But in most cases the player interactions are limited to the screen~\cite{DanceGamesList}.
-Despising the fact that this conflict with the dance nature itself (which is the movement of whole body), it shows the great limitation of today mobile devices in user interaction.
+Despising the fact that this conflicts with the dance nature itself (which is the movement of whole body), it shows the great limitation of today mobile devices in user interaction.
 
 There is one game which recognizes player movements~\cite{JustDanceNow}.
 In this case phone is used as a game controller and movements are read from one hand.
@@ -445,7 +445,7 @@ This task consist of three problems:
 \subsection{Hardware \& Software}
 Two shimmer sensors are used as a motion capture devices.
 They are second edition devices with \emph{BTStream v1.0} firmware. Also calibration software provided by the vendor was used \cite{ShimmerCalibration}.
-Sensors are placed on the front of the feet with orientation shown on Fig.~\ref{fig:ShimmerPlacement}.
+Sensors are placed on the front of the tibia bone with orientation shown on Fig.~\ref{fig:ShimmerPlacement}.
 
 \begin{figure}[!h]
     \centering
@@ -483,19 +483,19 @@ The $M$ denotes size of the filter and the result of $Fq/4$ is used as its value
 	\label{MovingAverage}
 \end{equation}
 
-To use filter with the signal the samples of data for each sensor axis are collected in queue with size  $2*M$ (Eq.~\ref{AxisData}).
-After reaching the $2*M$ number of data, the new one are appended at the end of the queue and the oldest one are removed, to keep size of $2*M$.
+To use filter with the signal the samples of data for each sensor axis are collected in queue with size  $2M$ (Eq.~\ref{AxisData}).
+After reaching the $2M$ number of data, the new one are appended at the end of the queue and the oldest one are removed, to keep size of $2M$.
 Index $a$ is used to distinguish between axis.
 
 \begin{equation}
-    f_a(n) = a_n\qquad n = 0, 1, ..., (2*M) - 1,\quad a \in \{x, y, z\}
+    f_a(n) = a_n\qquad n = 0, 1, ..., 2M - 1,\quad a \in \{x, y, z\}
     \label{AxisData}
 \end{equation}
 
-This process causes a delay because the number of $2*M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}). The $Fq$ is selected sampling rate.
+This process causes a delay because the number of $2M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}). The $Fq$ is selected sampling rate.
 
 \begin{equation}
-    delay = \frac{1}{Fq} * 2*M\quad[s]
+    delay = \frac{1}{Fq} * 2M\quad[s]
     \label{Delay}
 \end{equation}
 
@@ -533,8 +533,8 @@ To provide easier feet stamp detection additional queue is created with the same
     \label{Stamp}
 \end{equation}
 
-This result in one always positive signal (Fig.~\ref{fig:Stamp}) with exponentially increased peaks.
-On this signal the moving average filter is used as well (Fig.~\ref{fig:StampFiltered}).
+This result in one and always positive signal (Fig.~\ref{fig:Stamp}) with exponentially increased peaks - it was necessary to create clear distinction between small peaks produced by person accidentally and those created intentionally.
+On this result the moving average filter is used as well (Fig.~\ref{fig:StampFiltered}).
 
 \begin{figure}[!h]
     \centering
@@ -546,11 +546,43 @@ On this signal the moving average filter is used as well (Fig.~\ref{fig:StampFil
 \begin{figure}[!h]
     \centering
     \includegraphics[width=9.5cm]{Images/StampFiltered.png}
-    \caption{Signal for detecting feet stamps Eq.~\ref{Stamp} after filtering}
+    \caption{Signal for detecting feet stamps (Eq.~\ref{Stamp}) after filtering}
     \label{fig:StampFiltered}
 \end{figure}
 
 \subsection{Motion recognition}
+
+Position of the foot is determined by angle of device accelerometer axis.
+Motion recognition starts when $|f_y|$ value drops below specified threshold, which means that shimmer device is no longer in vertical position. Experience shown that threshold value $9$ is the best for this purpose.
+
+To determine front, back, left, right position firstly the stronger reading is chosen.
+If difference between values $|f_x|$ and $|f_z|$ is larger then assumed epsilon $\epsilon$ the the greater one is used (Eq~\ref{Epsilon}).
+
+\begin{equation}
+    \left||f_x| - |f_z|\right| > \epsilon
+    \label{Epsilon}
+\end{equation}
+
+Otherwise there is no clear distinction between directions. Value of epsilon $\epsilon$ used in project is $0.5$.
+
+If condition is satisfied the position is determined by sign of the chosen value.
+If value is positive then it is positive direction (front, right), otherwise it is negative direction (left, back) (Tab.~\ref{Directions}).
+
+\begin{table}[h!]
+	\caption{Table used to determine position of the foot based on the greater value of $|f_a|$ where $a \in \{x, z\}$}
+	\begin{center}
+		\begin{tabular}{c|cc}
+			& \ Positive \ &\ Negative or zero \ \\
+			\hline
+			$f_x$&Right&Left\\
+			$f_z$&Front&Back\\
+		\end{tabular}
+		\label{Directions}
+	\end{center}
+\end{table}
+
+In feet stamp detection the value of $f_s'$ is used. If it is below specified threshold then no stamp output is given, otherwise stamp confirmation is returned. Threshold for stamp detection was determined by trial and errors method, with help of designed for that purpose calibration activity, and its value is $3000$.
+
 
 \subsection{Game \& Graphic control}
 
