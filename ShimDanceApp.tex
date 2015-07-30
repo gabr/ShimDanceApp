@@ -400,6 +400,13 @@ Technische Fakultät}}
 
 
 \begin{abstract}
+There already exists good solutions for game controls and user interaction.
+Most of the games uses only screen to interact with the players.
+
+In this project Shimmer sensors were used to provide new way for players to interact with the game.
+After short development process accuracy of this new controller reached 69\,\% and there are still places for improvements.
+
+Using external sensors as our daily devices controllers can make our assimilation with technology more natural and easier.
 \end{abstract}
 
 
@@ -451,7 +458,7 @@ Sensors are placed on the front of the tibia bone with orientation shown on Fig.
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=5cm]{Images/Foot.jpg}
+    \includegraphics[width=3cm]{Images/Foot.jpg}
     \caption{Placement of the Shimmer sensor on the left foot.
     Y axis is pointing down, Z axis is pointing forward (with respect to the person wearing the sensor) and the X axis is pointing to the right. The same sensor orientation should be used for the right foot.}
     \label{fig:ShimmerPlacement}
@@ -466,15 +473,14 @@ Following mobile devices were used:
 Finally only the \emph{Samsung Galaxy s} devices were used because \emph{Samsung Galaxy Tab 2.0} was unable to process data with chosen sampling rates.
 
 For development process Android Studio 1.0.2 was used with target SDK version 11 \cite{AndroidStudio}. 
-Application was created based on \emph{aasbase} project provided by Pattern Recognition Lab (CS~5), Digital Sports Group from Friedrich-Alexander Universität in Erlangen \cite{CS5}.
-It uses shimmerresearch package in 1.1.3 version.
+Application was created based on \emph{aasbase} project provided by Pattern Recognition Lab \cite{CS5}.
 
 
 \subsection{Data acquisition}
 Connection with the sensors is done via bluetooth and requires pairing shimmers with device before using the application.
 Only accelerometer sensors are used with range set to $6\,G$ and with one of two sampling rates: $204,8\,Hz, 256\,Hz$.
 
-Whole communication is managed by provided shimmer drivers and \emph{SensorDeviceManager} class from \emph{aasbase} project. The exact description of communication process is explained in \emph{AAS\_Base\_Tutorial.pdf} also provided by Pattern Recognition Lab (CS~5), Digital Sports Group from Friedrich-Alexander Universität in Erlangen \cite{CS5}.
+Whole communication is managed by provided shimmer drivers and \emph{SensorDeviceManager} class from \emph{aasbase} project. The exact description of communication process is explained in \emph{AAS\_Base\_Tutorial.pdf} also provided by Pattern Recognition Lab \cite{CS5}.
 
 
 \subsection{Preprocessing}
@@ -495,7 +501,7 @@ Index $a$ is used to distinguish between axis.
     \label{AxisData}
 \end{equation}
 
-This process causes a delay because the number of $2M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}). The $Fq$ is selected sampling rate.
+This process causes a delay because the number of $2M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}).
 
 \begin{equation}
     delay = \frac{1}{Fq} * 2M = \frac{1}{Fq} * 2 * \frac{Fq}{4} = \frac{1}{2}\,[s]
@@ -509,26 +515,6 @@ Filtering is done by convolution of collected data with filter~(Eq.~\ref{Convolu
     \label{Convolution}
 \end{equation}
 
-The algorithm for this process looks as follows:
-\begin{enumerate}
-    \item Create filter $SMA$ (Eq.~\ref{MovingAverage})
-    \item For each new sensor data:
-    \begin{enumerate}
-        \item Append new data to the corresponding $f_a$ (Eq.~\ref{AxisData})
-        \item If size of $f_a$ is greater then $2M$ remove first element
-        \item Calculate $f_a'$ (Eq.~\ref{Convolution})
-    \end{enumerate}
-\end{enumerate}
-
-Example result of filtering can be seen on Fig.~\ref{fig:MovinAverageExample}.
-
-\begin{figure}[!h]
-    \centering
-    \includegraphics[width=9.5cm]{Images/MovinAverageExample.png}
-    \caption{Result of moving average filter with filter size equal $Fq/4$ where $Fq$ is selected sampling rate}
-    \label{fig:MovinAverageExample}
-\end{figure}
-
 To provide easier feet stamp detection additional queue is created with the same size as data queue (Eq.~\ref{Stamp}).
 
 \begin{equation}
@@ -536,20 +522,13 @@ To provide easier feet stamp detection additional queue is created with the same
     \label{Stamp}
 \end{equation}
 
-This result in one and always positive signal (Fig.~\ref{fig:Stamp}) with exponentially increased peaks - it was necessary to create clear distinction between peaks produced by person accidentally and those created intentionally.
+This result in one and always positive signal with exponentially increased peaks - it was necessary to create clear distinction between peaks produced by person accidentally and those created intentionally.
 On this result the moving average filter is used as well (Fig.~\ref{fig:StampFiltered}).
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=9.5cm]{Images/Stamp.png}
-    \caption{Sum of absolute values of all signal data}
-    \label{fig:Stamp}
-\end{figure}
-
-\begin{figure}[!h]
-    \centering
-    \includegraphics[width=9.5cm]{Images/StampFiltered.png}
-    \caption{Signal for detecting feet stamps (Eq.~\ref{Stamp}) after filtering}
+    \includegraphics[width=7cm]{Images/StampFiltered.png}
+    \caption{Signal for detecting feet stamps after filtering (Eq.~\ref{Stamp})}
     \label{fig:StampFiltered}
 \end{figure}
 
@@ -569,8 +548,7 @@ If difference between values $|f_x|$ and $|f_z|$ is larger then assumed epsilon 
 Otherwise there is no clear distinction between directions and empty result is returned.
 Value of epsilon $\epsilon$ used in project is $0.5$.
 
-If condition is satisfied the position is determined by sign of the chosen value.
-If value is positive then it is positive direction (front, right), otherwise it is negative direction (left, back) (Tab.~\ref{Directions}).
+If condition is satisfied the position is determined by sign of the chosen value as it is shown on Tab.~\ref{Directions}.
 
 \begin{table}[h!]
 	\caption{Table used to determine position of the foot based on the greater value of $|f_a|$ where $a \in \{x, z\}$}
@@ -585,81 +563,29 @@ If value is positive then it is positive direction (front, right), otherwise it 
 	\end{center}
 \end{table}
 
-In feet stamp detection the value of $f_s'$ is used. If it is below specified threshold then no stamp output is given, otherwise stamp confirmation is returned. Threshold for stamp detection was determined by trial and errors method, with help of designed for that purpose calibration activity, and its value is $3000$.
+In feet stamp detection the value of $f_s'$ is used. If it is below specified threshold then no stamp output is given, otherwise stamp confirmation is returned. Threshold for stamp detection was determined by trial and errors method and its value is $3000$.
 
 
 \subsection{Application \& Graphics control}
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=9cm]{Images/Activities.png}
+    \includegraphics[width=7cm]{Images/Activities.png}
     \caption{Application activities. First screen activity - list of paired devices, start button and if Bluetooth is turned off, button to turn it on.
     Tracks activity - list of songs and play button.
     Game activity - from the upper left corner to the right: score counter, time, selection box, arrows, play/pause button, song name and subscription.}
     \label{fig:Activities}
 \end{figure}
 
-
-Application consist of three full screen activities (Fig.~\ref{fig:Activities}):
-
-\subsubsection{First screen activity}
-Its purpose is to allow user to choose sensors that are used.
-This is a complete list of all paired shimmer devices.
-Additional control to allow selection of only two devices had to be added manually.
-
-Activity checks also Bluetooth status and provides button for turning it On if it is turned Off.
-
-For managing shimmer devices the \emph{BluetoothAdapter} class is used and provided by Pattern Recognition Lab \emph{SensorDeviceManager} class \cite{CS5}.
-
-
-\subsubsection{Tracks activity}
-Allows to select song. All songs are included as an application raw resources so they are compiled in result \emph{.apk} file.
-
-Because of that application is available as one \emph{.apk} file but it size is large.
-
-
-\subsubsection{Game activity}
-Shows selected song name, time, score and provides play/pause button.
-
-It controls other application modules.
-When game begins the counter from 1 to 5 is shown before arrows starts to pup up. At the end the score is provided.
-
-\subsubsection{Graphics}
-Whole animated graphics are rendered inside one \emph{View} control.
-This control is inherited by \emph{CanvasView} class which overrides \emph{onLayout} and \emph{onDraw} methods. Also provides various useful methods to stop, start and pause animation \cite{Application}.
-
+Application consist of three full screen activities (Fig.~\ref{fig:Activities}).
+Whole animated graphics are rendered inside \emph{CanvasView} class.
 Inside \emph{onLayout} method the size of all draw elements is calculated.
-The \emph{onDraw} method is called each time the view has to be redrawn.
 To force regular 25\,fps redraw, at the end of the \emph{onDraw} method the \emph{invalidate()} call is post delayed by 40\,ms.
 
-
-\emph{CanvasView} draws by itself only the selection box, counter on the beginning and score at the end.
-Arrows are drawn and positioned by \emph{Arrow} class.
-What is drawn depends on inner state which can be one of: \emph{init, pause, play, end}.
-
-Both direction and time of appearance of the arrow are generated randomly by \emph{CanvasView} but there can be only one arrow per row.
-
+Both direction and time of appearance of the arrow are generated randomly.
 All drawing is done directly on the screen, without double buffering technique.
 
 \subsection{Synchronization of application modules}
-
-Main application modules:
-\begin{itemize}
-    \item \emph{DataProcessor} - data acquisition and preprocessing
-    \item \emph{CanvasView} - game visualization
-    \item \emph{GameActivity} - game control
-\end{itemize}
-
-Whole data acquisition and preprocessing is done in separate thread (\emph{DataProcessor}) while whole graphics rendering and information synchronization is done in main thread (\emph{CanvasView}, \emph{GameActivity}).
-
-After acquiring and preprocessing new data \emph{DataProcessor} sends result in form of the string to all subscribed handlers. Output string contains one direction char and one stamp detection char:
-\begin{itemize}
-    \item \emph{r, l, f, b} - for movement direction
-    \item \emph{P, N} - for stamp or no stamp indication
-\end{itemize}
-
-While rendering graphics \emph{CanvasView} checks if there is an arrow inside selection box.
-If an arrow is inside it sends information about arrow type to \emph{GameActivity}.
 
 \begin{figure}[!h]
     \centering
@@ -668,11 +594,27 @@ If an arrow is inside it sends information about arrow type to \emph{GameActivit
     \label{fig:Synchronization}
 \end{figure}
 
+Main application modules:
+\begin{itemize}
+    \item \emph{DataProcessor} - data acquisition and processing
+    \item \emph{CanvasView} - game visualization
+    \item \emph{GameActivity} - game control
+\end{itemize}
+
+Whole data acquisition and preprocessing is done in separate thread (\emph{DataProcessor}) while whole graphics rendering and information synchronization is done in main thread (\emph{CanvasView}, \emph{GameActivity}).
+
+\emph{DataProcessor} sends result in form of the string to all subscribed handlers. Output string contains one direction char and one stamp detection char:
+\begin{itemize}
+    \item \emph{r, l, f, b} - for movement direction
+    \item \emph{P, N} - for stamp or no stamp indication
+\end{itemize}
+
+While rendering graphics \emph{CanvasView} checks if there is an arrow inside selection box and sends that information to \emph{GameActivity}.
+
 \emph{GameActivity} synchronizes information from both modules (Fig.~\ref{fig:Synchronization}).
-It provides handler for \emph{DataProcessor} and saves arrow type sent by \emph{CanvasView}.
 All result strings obtained from \emph{DataProcessor} are stored inside $10$ char buffer after removing duplicated chars.
 
-If char buffer contains char related to currently stored arrow direction and it contains information about stamps as well, then the move is accepted. After accepting the move the currently stored arrow type is removed, the signal to \emph{CanvasView} about success is sent (which causes selection box to light green) and score is changed.
+If char buffer contains char related to currently stored arrow direction and it contains information about stamps as well, then the move is accepted.
 
 %Results
 \section{Results}
@@ -733,22 +675,17 @@ This delay is huge for real time system and constant regardless of used sampling
 This is the main weakness of the system.
 
 Detection of the foot stamps depends on the force used while stamping, so also on player height, mass, age, shoes.
-Hardcoded threshold is not the best solution for this problem.
-
-Interpretation of detection results while synchronization does not provide any error checks.
-Just one direction with stamp is enough to accept the movement.
-The buffer created in \emph{GameActivity} may contain wrongly detected movement and it will accept it event if it is surrounded by completely different direction.
  
 The results (Tab.~\ref{Results204}, Tab.~\ref{Results256}) shown that increasing the sampling rate causes accuracy to drop down.
 This is because rendering the graphics with processing data at the same time is too much for even new devices at such high sampling rate.
-And this causes additional delay.
 
 %Discussion
 \section{Summary and outlook}
 
-While application is working its inaccuracy is unacceptable. Game controllers should provide $100\,\%$ accuracy and speed.
+While application is working its inaccuracy is unacceptable.
+Game controllers should provide $100\,\%$ accuracy and speed.
 
-Both of those problems can be improved. By providing filtering with smaller filter size the delay can be greatly decreased. This will also result in decreasing number of required calculations allowing older devices to handle the game.
+By providing filtering with smaller filter size the delay can be greatly decreased. This will also result in decreasing number of required calculations allowing older devices to handle the game.
 
 Additional calibration screen for any new player should be provided in application to automatically generate proper thresholds for $f_y$, $\epsilon$ and stamp detection.
 
