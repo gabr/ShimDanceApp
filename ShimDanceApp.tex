@@ -498,7 +498,7 @@ Index $a$ is used to distinguish between axis.
 This process causes a delay because the number of $2M$ have to be collected before first usage of the filter (Eq.~\ref{Delay}). The $Fq$ is selected sampling rate.
 
 \begin{equation}
-    delay = \frac{1}{Fq} * 2M\quad[s]
+    delay = \frac{1}{Fq} * 2M = \frac{1}{Fq} * 2 * \frac{Fq}{4} = \frac{1}{2}\,[s]
     \label{Delay}
 \end{equation}
 
@@ -639,6 +639,8 @@ What is drawn depends on inner state which can be one of: \emph{init, pause, pla
 
 Both direction and time of appearance of the arrow are generated randomly by \emph{CanvasView} but there can be only one arrow per row.
 
+All drawing is done directly on the screen, without double buffering technique.
+
 \subsection{Synchronization of application modules}
 
 Main application modules:
@@ -675,25 +677,7 @@ If char buffer contains char related to currently stored arrow direction and it 
 %Results
 \section{Results}
 
-Application was tested on 6 subjects, two devices and both sampling rates with final accuracy result of $69.34\,\%$ (Tab.~\ref{Results256}, Tab.~\ref{Results204}).
-
-\begin{table}[h!]
-	\caption{Application test results on 6 subjects and two devices with sampling rate $256\,Hz$}
-	\begin{center}
-		\begin{tabular}{c|cccccc|c}
-			& \ 1 \ &\ 2 \ &\ 3 \ &\ 4 \ &\ 5 \ &\ 6 \ &\ Average\\
-			\hline
-			Total moves&122&118&97&138&113&101\\
-			\hline
-			Correctly classified:&&&&&&\\
-			\emph{Galaxy s5}&88&91&51&99&75&81&$70.02\,\%$\\
-			\emph{Galaxy s4 min LTE}&77&85&49&89&58&61&$60.31\,\%$\\
-			\hline
-		    Result&&&&&&&$65.17\,\%$
-		\end{tabular}
-		\label{Results256}
-	\end{center}
-\end{table}
+Application was tested on 6 subjects, two devices and both sampling rates with final accuracy result of $69.34\,\%$ (Tab.~\ref{Results204}, Tab.~\ref{Results256}).
 
 \begin{table}[h!]
 	\caption{Application test results on 6 subjects and two devices with sampling rate $204.8\,Hz$}
@@ -713,20 +697,72 @@ Application was tested on 6 subjects, two devices and both sampling rates with f
 	\end{center}
 \end{table}
 
+\begin{table}[h!]
+	\caption{Application test results on 6 subjects and two devices with sampling rate $256\,Hz$}
+	\begin{center}
+		\begin{tabular}{c|cccccc|c}
+			& \ 1 \ &\ 2 \ &\ 3 \ &\ 4 \ &\ 5 \ &\ 6 \ &\ Average\\
+			\hline
+			Total moves&122&118&97&138&113&101\\
+			\hline
+			Correctly classified:&&&&&&\\
+			\emph{Galaxy s5}&88&91&51&99&75&81&$70.02\,\%$\\
+			\emph{Galaxy s4 min LTE}&77&85&49&89&58&61&$60.31\,\%$\\
+			\hline
+		    Result&&&&&&&$65.17\,\%$
+		\end{tabular}
+		\label{Results256}
+	\end{center}
+\end{table}
+
 %Discussion
 \section{Discussion}
+
+This task consisted of three problems:
+\begin{itemize}
+    \item Detection of foot position (left, right, front, back)
+    \item Detection of foot stamps
+    \item Synchronizing detections with the game
+\end{itemize}
+
+Detection of foot position strongly depends on player accuracy and correct sensor placement.
+Because of strong filtering some very fast movements may not be detected correctly.
+
+Most of the errors comes from system delay explained in \emph{Preprocessing} subsection (Eq.~\ref{Delay}).
+This delay is huge for real time system and constant regardless of used sampling rate.
+This is the main weakness of the system.
+
+Detection of the foot stamps depends on the force used while stamping, so also on player height, mass, age, shoes.
+Hardcoded threshold is not the best solution for this problem.
+
+Interpretation of detection results while synchronization does not provide any error checks.
+Just one direction with stamp is enough to accept the movement.
+The buffer created in \emph{GameActivity} may contain wrongly detected movement and it will accept it event if it is surrounded by completely different direction.
  
+The results (Tab.~\ref{Results204}, Tab.~\ref{Results256}) shown that increasing the sampling rate causes accuracy to drop down.
+This is because rendering the graphics with processing data at the same time is too much for even new devices at such high sampling rate.
+And this causes additional delay.
+
 %Discussion
 \section{Summary and outlook}
-In the future we can expect to see technology such as Project Soli which will allow to recognize user motions far from device \cite{ProjectSoli}.
 
+While application is working its inaccuracy is unacceptable. Game controllers should provide $100\,\%$ accuracy and speed.
 
+Both of those problems can be improved. By providing filtering with smaller filter size the delay can be greatly decreased. This will also result in decreasing number of required calculations allowing older devices to handle the game.
+
+Additional calibration screen for any new player should be provided in application to automatically generate proper thresholds for $f_y$, $\epsilon$ and stamp detection.
+
+Implementation of double buffering technique into \emph{CanvasView} would allow to reach $60\,fps$ and add additional graphical effects.
+
+Usage of shimmer sensor as a game controllers is better than limiting players to the screen. But they still external devices that have to be charged and carried.
+In the future we can expect to see technology such as Project Soli which will allow to recognize user motions far from device without attaching any additional devices\cite{ProjectSoli}.
 % conference papers do not normally have an appendix
 
 
 % use section* for acknowledgement
 \section*{Acknowledgment}
-
+The author would like to thank tutors of Seminar Android
+Apps fur Sensornetzwerke.
 
 \begin{thebibliography}{5}
 
